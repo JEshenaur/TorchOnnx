@@ -101,7 +101,7 @@
 
       try {
         status.innerText = "Status: Loading model...";
-        session = await ort.InferenceSession.create("california_housing_model.onnx");
+        session = await ort.InferenceSession.create("./california_housing_model_v2.onnx");
         status.innerText = "Status: Model loaded successfully";
         debug.innerText = "";
       } catch (error) {
