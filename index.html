@@ -137,8 +137,9 @@
         const inputTensor = new ort.Tensor("float32", new Float32Array(values), [1, 8]);
         const results = await session.run({ input: inputTensor });
         const prediction = results.output.data[0];
+        const dollars = prediction * 100000;
         document.getElementById("result").innerText =
-          "Prediction: " + prediction.toFixed(4);
+          "Predicted House Value: $" + dollars.toFixed(2);
       } catch (error) {
         const dollars = prediction * 100000;
         document.getElementById("result").innerText =
