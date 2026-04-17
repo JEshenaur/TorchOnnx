@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>California Housing Price Predictor</title>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    h1 { text-align: center; }
+    .field { margin-bottom: 12px; }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+    #status, #result, #debug {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #debug {
+      color: red;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>California Housing Price Predictor</h1>
+
+  <div class="field">
+    <label>Median Income</label>
+    <input type="number" id="MedInc" step="any" value="8.3252">
+  </div>
+
+  <div class="field">
+    <label>House Age</label>
+    <input type="number" id="HouseAge" step="any" value="41.0">
+  </div>
+
+  <div class="field">
+    <label>Average Rooms</label>
+    <input type="number" id="AveRooms" step="any" value="6.9841">
+  </div>
+
+  <div class="field">
+    <label>Average Bedrooms</label>
+    <input type="number" id="AveBedrms" step="any" value="1.0238">
+  </div>
+
+  <div class="field">
+    <label>Population</label>
+    <input type="number" id="Population" step="any" value="322.0">
+  </div>
+
+  <div class="field">
+    <label>Average Occupancy</label>
+    <input type="number" id="AveOccup" step="any" value="2.5556">
+  </div>
+
+  <div class="field">
+    <label>Latitude</label>
+    <input type="number" id="Latitude" step="any" value="37.88">
+  </div>
+
+  <div class="field">
+    <label>Longitude</label>
+    <input type="number" id="Longitude" step="any" value="-122.23">
+  </div>
+
+  <button onclick="predictHouseValue()">Predict House Value</button>
+
+  <div id="status">Status: Loading model...</div>
+  <div id="result">Prediction:</div>
+  <div id="debug"></div>
+
+  <script>
+    let session = null;
+
+    async function loadModel() {
+      const status = document.getElementById("status");
+      const debug = document.getElementById("debug");
+
+      try {
+        status.innerText = "Status: Loading model...";
+        session = await ort.InferenceSession.create("california_housing_model.onnx");
+        status.innerText = "Status: Model loaded successfully";
+        debug.innerText = "";
+      } catch (error) {
+        status.innerText = "Status: Model failed to load";
+        debug.innerText = "Load error: " + error;
+        console.error("Load error:", error);
+      }
+    }
+
+    async function predictHouseValue() {
+      if (!session) {
+        alert("Model is not loaded yet.");
+        return;
+      }
+
+      const values = [
+        parseFloat(document.getElementById("MedInc").value),
+        parseFloat(document.getElementById("HouseAge").value),
+        parseFloat(document.getElementById("AveRooms").value),
+        parseFloat(document.getElementById("AveBedrms").value),
+        parseFloat(document.getElementById("Population").value),
+        parseFloat(document.getElementById("AveOccup").value),
+        parseFloat(document.getElementById("Latitude").value),
+        parseFloat(document.getElementById("Longitude").value)
+      ];
+
+      if (values.some(v => isNaN(v))) {
+        alert("Please enter all 8 values.");
+        return;
+      }
+
+      try {
+        const inputTensor = new ort.Tensor("float32", new Float32Array(values), [1, 8]);
+        const results = await session.run({ input: inputTensor });
+        const prediction = results.output.data[0];
+        document.getElementById("result").innerText =
+          "Prediction: " + prediction.toFixed(4);
+      } catch (error) {
+        document.getElementById("debug").innerText = "Prediction error: " + error;
+        console.error("Prediction error:", error);
+      }
+    }
+
+    loadModel();
+  </script>
+</body>
+</html>
